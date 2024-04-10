@@ -3,7 +3,7 @@ syntax = "proto3";
 
 message AppStats {
     int32 ticks = 1;
-    int32 button_press_count = 2;
+    int32 open_count = 2;
 };
 
 message StatusUpdateRequest {
@@ -16,7 +16,7 @@ message StatusUpdateRequest {
 }
 
 message StatusUpdateResponse {
-    string message = 1;
+    string message  = 1;
 }
 
 enum OTAState{
