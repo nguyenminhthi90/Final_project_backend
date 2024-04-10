@@ -14,7 +14,7 @@ provider "aws" {
 
   # If you have your own AWS account, you can set up a profile
   # using the AWS console and set it here.
-  profile = "skobovm"
+  #profile = "nhantt"
 }
 
 # Note: if not accessing AWS through Vocareum, another SSH keypair
@@ -23,7 +23,7 @@ provider "aws" {
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstances.html
 data "aws_key_pair" "ssh_key" {
-  key_name           = "ec2_access"
+  key_name           = "vockey"
   include_public_key = true
 
   filter {
@@ -33,7 +33,7 @@ data "aws_key_pair" "ssh_key" {
     # This can be found under the EC2 page, in the "Key Pairs" section.
 
     # WARNING: this is NOT your key; you need to change it
-    values = ["key-06c68812aa9271f80"]
+    values = ["key-096ef49b61c9f3b8c"]
   }
 }
 
@@ -118,66 +118,66 @@ locals {
   ]
 }
 
-resource "aws_iam_instance_profile" "app_server_profile" {
-  name = "EC2-Profile"
-  role = aws_iam_role.app_server_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "app_server_policy_attachment" {
-  count = length(local.role_policy_arns)
-
-  role       = aws_iam_role.app_server_role.name
-  policy_arn = element(local.role_policy_arns, count.index)
-}
+#resource "aws_iam_instance_profile" "app_server_profile" {
+#  name = "EC2-Profile"
+#  role = aws_iam_role.app_server_role.name
+#}
+#
+#resource "aws_iam_role_policy_attachment" "app_server_policy_attachment" {
+#  count = length(local.role_policy_arns)
+#
+#  role       = aws_iam_role.app_server_role.name
+#  policy_arn = element(local.role_policy_arns, count.index)
+#}
 
 # This just serves as an example of how to add a policy to a EC2 instance.
 # If you would like S3 access from the server (e.g. to list release binaries)
 # this would be the place to add it.
-resource "aws_iam_role_policy" "app_server_policy" {
-  name = "EC2-Inline-Policy"
-  role = aws_iam_role.app_server_role.id
-  policy = jsonencode(
-    {
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Effect" : "Allow",
-          "Action" : [
-            "ssm:GetParameter"
-          ],
-          "Resource" : "*"
-        }
-      ]
-    }
-  )
-}
+#resource "aws_iam_role_policy" "app_server_policy" {
+#  name = "EC2-Inline-Policy"
+#  role = aws_iam_role.app_server_role.id
+#  policy = jsonencode(
+#    {
+#      "Version" : "2012-10-17",
+#      "Statement" : [
+#        {
+#          "Effect" : "Allow",
+#          "Action" : [
+#            "ssm:GetParameter"
+#          ],
+#          "Resource" : "*"
+#        }
+#      ]
+#    }
+#  )
+#}
 
-resource "aws_iam_role" "app_server_role" {
-  name = "EC2-Role"
-  path = "/"
-
-  assume_role_policy = jsonencode(
-    {
-      "Version" : "2012-10-17",
-      "Statement" : [
-        {
-          "Action" : "sts:AssumeRole",
-          "Principal" : {
-            "Service" : "ec2.amazonaws.com"
-          },
-          "Effect" : "Allow"
-        }
-      ]
-    }
-  )
-}
+#resource "aws_iam_role" "app_server_role" {
+#  name = "EC2-Role"
+#  path = "/"
+#
+#  assume_role_policy = jsonencode(
+#    {
+#      "Version" : "2012-10-17",
+#      "Statement" : [
+#        {
+#          "Action" : "sts:AssumeRole",
+#          "Principal" : {
+#            "Service" : "ec2.amazonaws.com"
+#          },
+#          "Effect" : "Allow"
+#        }
+#      ]
+#    }
+#  )
+#}
 
 resource "aws_instance" "app_server" {
   ami           = "ami-0557a15b87f6559cf"
   instance_type = "t2.micro"
-  key_name      = "ec2_access"
+  key_name      = "vockey"
   vpc_security_group_ids = [aws_security_group.allow_all.id]
-  iam_instance_profile = aws_iam_instance_profile.app_server_profile.name
+  #iam_instance_profile = aws_iam_instance_profile.app_server_profile.name
 
   # TODO(mskobov): Install venv package and python/other packages
   # TODO(mskobov): Have separate user data for server/http/tcp
@@ -194,7 +194,7 @@ resource "aws_instance" "app_server" {
       type     = "ssh"
       user     = "ubuntu"
       private_key = file(var.ssh_key_path)
-      host     = aws_instance.app_server.public_ip
+      host     = "${self.public_dns}"
     }
   }
 
@@ -207,7 +207,7 @@ resource "aws_instance" "app_server" {
       type     = "ssh"
       user     = "ubuntu"
       private_key = file(var.ssh_key_path)
-      host     = aws_instance.app_server.public_ip
+      host     = "${self.public_dns}"
     }
   }
 
@@ -221,7 +221,7 @@ resource "aws_instance" "app_server" {
 # private, with the server generating pre-signed URLs to access the binaries.
 # That, however, is out of scope for this course.
 resource "aws_s3_bucket" "release_bucket" {
-  bucket = "skobovm-iotemb-firmware-releases"
+  bucket = "nhantt-iotemb-firmware-releases"
 }
 
 resource "aws_s3_bucket_ownership_controls" "release_bucket" {
